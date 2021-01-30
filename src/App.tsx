@@ -1,4 +1,4 @@
-import React from "react";
+import React, { PropsWithChildren } from "react";
 
 import { FetchError, QueryResult, typedFetch } from "./typedFetch";
 // part 3: using typedFetch
@@ -53,13 +53,25 @@ const useCurrentTodo = () => {
   return [state, refetch] as const;
 };
 
+const RetryButton = ({
+  retry,
+  children,
+}: PropsWithChildren<{ retry: () => void }>) => {
+  return <button onClick={retry}>{children}</button>;
+};
+
 const MyFavoriteColors = () => {
-  const [result] = useCurrentTodo();
+  const [result, refetch] = useCurrentTodo();
 
   if (result.status === "loading") return <div>Loading</div>;
   if (result.status === "error") {
     if (result.error.kind === "network-error")
-      return <div>network error occurred. try refreshing.</div>;
+      return (
+        <div>
+          network error occurred. try{" "}
+          <RetryButton retry={refetch}>refreshing.</RetryButton>
+        </div>
+      );
     return <div>HTTP error code {result.error.code}</div>;
   }
   return <div>{result.result.title}</div>;
