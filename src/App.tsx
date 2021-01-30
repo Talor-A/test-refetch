@@ -30,7 +30,28 @@ const loadTodos = (todoId: string) => {
 // step 4: use with react
 export const TodoContext = React.createContext("1");
 
-type QueryWithLoading<T, E = Error> = QueryResult<T, E> | { status: "loading" };
+/**
+ * Extends our Query result with a state to represent loading.
+ */
+type QueryOrLoading<T, E = FetchError> =
+  | QueryResult<T, E>
+  | { status: "loading" };
+
+const useQuery = function <T, E>(callback: () => Promise<QueryResult<T, E>>) {
+  const refetch = React.useCallback(() => {
+    callback().then((res) => setState(res));
+  }, [callback]);
+
+  const [state, setState] = React.useState<QueryOrLoading<T, E>>({
+    status: "loading",
+  });
+
+  React.useEffect(() => {
+    refetch();
+  }, [refetch]);
+
+  return [state, refetch] as const;
+};
 
 /**
  * React Hook. reads the current todo id from context and returns its data.
@@ -38,18 +59,10 @@ type QueryWithLoading<T, E = Error> = QueryResult<T, E> | { status: "loading" };
 const useCurrentTodo = () => {
   const currentTodo = React.useContext(TodoContext);
 
-  const refetch = React.useCallback(
-    () => loadTodos(currentTodo).then((res) => setState(res)),
-    [currentTodo]
-  );
-
-  const [state, setState] = React.useState<
-    QueryWithLoading<TodosResponse, FetchError>
-  >({ status: "loading" });
-
-  React.useEffect(() => {
-    refetch();
-  }, [refetch]);
+  const callback = React.useCallback(() => loadTodos(currentTodo), [
+    currentTodo,
+  ]);
+  const [state, refetch] = useQuery(callback);
   return [state, refetch] as const;
 };
 

@@ -4,7 +4,7 @@
  * A given backend fetch can be represented in one of two states:
  * data (success) or error (failure).
  */
-export type QueryResult<T, E = Error> =
+export type QueryResult<T, E> =
   | {
       status: "result";
       result: T;
