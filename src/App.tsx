@@ -74,20 +74,25 @@ const RetryButton = ({
 };
 
 const MyFavoriteColors = () => {
-  const [result, refetch] = useCurrentTodo();
+  const [todo, refetch] = useCurrentTodo();
 
-  if (result.status === "loading") return <div>Loading</div>;
-  if (result.status === "error") {
-    if (result.error.kind === "network-error")
+  if (todo.status === "loading") return <div>Loading</div>;
+  if (todo.status === "error") {
+    if (todo.error.kind === "network-error")
       return (
         <div>
           network error occurred. try{" "}
           <RetryButton retry={refetch}>refreshing.</RetryButton>
         </div>
       );
-    return <div>HTTP error code {result.error.code}</div>;
+    return <div>HTTP error code {todo.error.code}</div>;
   }
-  return <div>{result.result.title}</div>;
+  return (
+    <pre>
+      <code>{todo.status}</code>
+      <code>{JSON.stringify(todo.result, null, 2)}</code>
+    </pre>
+  );
 };
 
 export default MyFavoriteColors;
