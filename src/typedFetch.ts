@@ -6,7 +6,7 @@
  */
 export type QueryResult<T, E> =
   | {
-      status: "result";
+      status: "done";
       result: T;
     }
   | {
@@ -64,7 +64,7 @@ export const typedFetch = async function <TData>(
     }
     const result = await data.json();
     return {
-      status: "result",
+      status: "done",
       result,
     };
   } catch (e) {
