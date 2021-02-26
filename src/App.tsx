@@ -1,6 +1,6 @@
 import React, { PropsWithChildren } from "react";
 
-import { Failure, QueryResult, Success, typedFetch } from "./typedFetch";
+import { FetchResult, typedFetch } from "./typedFetch";
 // part 3: using typedFetch
 
 /**
@@ -30,21 +30,19 @@ const loadTodos = (todoId: string) => {
 // step 4: use with react
 export const TodoContext = React.createContext("1");
 
+type UseFetchState<TData> = FetchResult<TData> | { status: "loading" };
 /**
- * Extends our Query result with a state to represent loading.
+ * returns the state of an async operation and a refetch function.
  */
-type QueryOrLoading<T extends Success, E extends Failure> =
-  | QueryResult<T, E>
-  | { status: "loading" };
-
-const useQuery = function <T extends Success, E extends Failure>(
-  callback: () => Promise<QueryResult<T, E>>
+const useFetch = function <TData>(
+  callback: () => Promise<FetchResult<TData>>,
+  options = { isImmediate: true, setLoadingOnRefetch: true }
 ) {
   const refetch = React.useCallback(() => {
-    callback().then((res) => setState(res));
+    Promise.resolve(callback()).then((res) => setState(res));
   }, [callback]);
 
-  const [state, setState] = React.useState<QueryOrLoading<T, E>>({
+  const [state, setState] = React.useState<UseFetchState<TData>>({
     status: "loading",
   });
 
@@ -64,7 +62,7 @@ const useCurrentTodo = () => {
   const callback = React.useCallback(() => loadTodos(currentTodo), [
     currentTodo,
   ]);
-  const [query, refetch] = useQuery(callback);
+  const [query, refetch] = useFetch(callback);
 
   return [query, refetch] as const;
 };

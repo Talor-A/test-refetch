@@ -28,7 +28,7 @@ export type QueryResult<S extends Success, F extends Failure> = S | F;
  */
 export interface NetworkFailure extends Failure {
   kind: "network-error";
-  errorObject: Error;
+  error: TypeError;
   url: string;
 }
 /**
@@ -92,7 +92,7 @@ export const typedFetch = async function <TData>(
       status: "error",
 
       kind: "network-error",
-      errorObject: e,
+      error: e,
       url,
     };
   }
