@@ -1,6 +1,6 @@
 import React, { PropsWithChildren } from "react";
 
-import { FetchError, QueryResult, typedFetch } from "./typedFetch";
+import { Failure, QueryResult, Success, typedFetch } from "./typedFetch";
 // part 3: using typedFetch
 
 /**
@@ -33,11 +33,13 @@ export const TodoContext = React.createContext("1");
 /**
  * Extends our Query result with a state to represent loading.
  */
-type QueryOrLoading<T, E = FetchError> =
+type QueryOrLoading<T extends Success, E extends Failure> =
   | QueryResult<T, E>
   | { status: "loading" };
 
-const useQuery = function <T, E>(callback: () => Promise<QueryResult<T, E>>) {
+const useQuery = function <T extends Success, E extends Failure>(
+  callback: () => Promise<QueryResult<T, E>>
+) {
   const refetch = React.useCallback(() => {
     callback().then((res) => setState(res));
   }, [callback]);
@@ -63,6 +65,7 @@ const useCurrentTodo = () => {
     currentTodo,
   ]);
   const [state, refetch] = useQuery(callback);
+
   return [state, refetch] as const;
 };
 
@@ -73,26 +76,26 @@ const RetryButton = ({
   return <button onClick={retry}>{children}</button>;
 };
 
-const MyFavoriteColors = () => {
-  const [todo, refetch] = useCurrentTodo();
+const MyTodos = () => {
+  const [todoQuery, refetch] = useCurrentTodo();
 
-  if (todo.status === "loading") return <div>Loading</div>;
-  if (todo.status === "error") {
-    if (todo.error.kind === "network-error")
+  if (todoQuery.status === "loading") return <div>Loading</div>;
+  if (todoQuery.status === "error") {
+    if (todoQuery.kind === "network-error")
       return (
         <div>
           network error occurred. try{" "}
           <RetryButton retry={refetch}>refreshing.</RetryButton>
         </div>
       );
-    return <div>HTTP error code {todo.error.code}</div>;
+    return <div>HTTP error code {todoQuery.error.code}</div>;
   }
   return (
     <pre>
-      <code>{todo.status}</code>
-      <code>{JSON.stringify(todo.result, null, 2)}</code>
+      <code>{todoQuery.status}</code>
+      <code>{JSON.stringify(todoQuery.result, null, 2)}</code>
     </pre>
   );
 };
 
-export default MyFavoriteColors;
+export default MyTodos;

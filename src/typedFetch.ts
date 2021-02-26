@@ -1,34 +1,48 @@
 // part 1: representing queries
 
 /**
+ * yay! it worked!
+ */
+export interface Success {
+  status: "success";
+}
+/**
+ * he's dead, jim
+ */
+export interface Failure {
+  status: "error";
+}
+/**
  * A given backend fetch can be represented in one of two states:
  * data (success) or error (failure).
  */
-export type QueryResult<T, E> =
-  | {
-      status: "done";
-      result: T;
-    }
-  | {
-      status: "error";
-      error: E;
-    };
+export type QueryResult<S extends Success, F extends Failure> = S | F;
 
 // Part 2: a typesafe fetch
 
-/** this interface represents a failure of a request to complete. */
-export type NetworkError = {
+/**
+ * this interface represents a failure of a request to complete.
+ * network errors are thrown from the js process in cases such as:
+ * - the network going down
+ * - a request timing out
+ */
+export interface NetworkFailure extends Failure {
   kind: "network-error";
   errorObject: Error;
   url: string;
-};
-/** represents an http response with a "failed" status code */
-export type HTTPStatusError = {
+}
+/**
+ * represents an http response with a "failed" status code
+ * "failed" = (4xx or 5xx) response.
+ */
+export interface BadHTTPStatus extends Failure {
   kind: "status-error";
-  code: number;
-  statusText: string;
   url: string;
-};
+  error: {
+    code: number;
+    statusText: string;
+  };
+}
 /**
  * There are two distinct types of fetch "errors".
  * the first, network errors, are thrown from the js process in cases such as:
@@ -38,7 +52,13 @@ export type HTTPStatusError = {
  *
  * this interface clearly denotes which kind has occurred.
  */
-export type FetchError = NetworkError | HTTPStatusError;
+export interface FetchSuccess<TData> extends Success {
+  result: TData;
+}
+export type FetchResult<TData> = QueryResult<
+  FetchSuccess<TData>,
+  NetworkFailure | BadHTTPStatus
+>;
 
 /**
  * this fetch will never throw, only return data
@@ -46,7 +66,7 @@ export type FetchError = NetworkError | HTTPStatusError;
 export const typedFetch = async function <TData>(
   req: RequestInfo,
   init?: RequestInit
-): Promise<QueryResult<TData, FetchError>> {
+): Promise<FetchResult<TData>> {
   const url = typeof req === "string" ? req : req.url;
 
   try {
@@ -54,27 +74,26 @@ export const typedFetch = async function <TData>(
     if (!data.ok) {
       return {
         status: "error",
+        kind: "status-error",
+        url,
         error: {
-          kind: "status-error",
           code: data.status,
           statusText: data.statusText,
-          url,
         },
       };
     }
-    const result = await data.json();
+    const result: TData = await data.json();
     return {
-      status: "done",
+      status: "success",
       result,
     };
   } catch (e) {
     return {
       status: "error",
-      error: {
-        kind: "network-error",
-        errorObject: e,
-        url,
-      },
+
+      kind: "network-error",
+      errorObject: e,
+      url,
     };
   }
 };
