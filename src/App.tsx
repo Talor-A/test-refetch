@@ -64,9 +64,9 @@ const useCurrentTodo = () => {
   const callback = React.useCallback(() => loadTodos(currentTodo), [
     currentTodo,
   ]);
-  const [state, refetch] = useQuery(callback);
+  const [query, refetch] = useQuery(callback);
 
-  return [state, refetch] as const;
+  return [query, refetch] as const;
 };
 
 const RetryButton = ({
