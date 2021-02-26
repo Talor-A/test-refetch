@@ -34,10 +34,7 @@ type UseFetchState<TData> = FetchResult<TData> | { status: "loading" };
 /**
  * returns the state of an async operation and a refetch function.
  */
-const useFetch = function <TData>(
-  callback: () => Promise<FetchResult<TData>>,
-  options = { isImmediate: true, setLoadingOnRefetch: true }
-) {
+const useFetch = function <TData>(callback: () => Promise<FetchResult<TData>>) {
   const refetch = React.useCallback(() => {
     Promise.resolve(callback()).then((res) => setState(res));
   }, [callback]);
